@@ -1,0 +1,58 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: lumen_container
+    volumes:
+      - ./backend:/var/www
+      - ./backend/nginx/default:/etc/nginx/sites-available/default
+    ports:
+      - "1010:80"
+    depends_on:
+      - mysql
+    networks:
+      - project4
+    entrypoint: ["/bin/bash", "/var/www/startup_backend.sh"]
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: coreui_container
+    restart: always
+    volumes:
+      - ./frontend:/app
+      - ./frontend/nginx/default:/etc/nginx/sites-available/default
+    networks:
+      - project4
+    depends_on:
+      - backend
+    ports:
+      - "1011:80"
+
+  mysql:
+    image: mysql:8.0.30
+    container_name: mysql_container
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: lumen_db
+    volumes:
+      # Map your local MySQL data to the container
+      - ./mysql_data:/var/lib/mysql
+    ports:
+      - "3307:3306"
+    networks:
+      - project4
+
+  adminer:
+    image: adminer
+    container_name: adminer_container
+    ports:
+      - "1012:8080"
+    networks:
+      - project4
+
+networks:
+  project4:
+    driver: bridge
